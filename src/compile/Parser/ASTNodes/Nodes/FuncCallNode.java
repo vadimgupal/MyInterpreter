@@ -1,8 +1,8 @@
-package compile.Parser.ASTNodes;
+package compile.Parser.ASTNodes.Nodes;
 
 import compile.Lexer.Position;
-import compile.Parser.ASTNodes.Visitor.IVisitor;
-import compile.Parser.ASTNodes.Visitor.IVisitorP;
+import compile.Parser.ASTNodes.Visitors.IVisitor;
+import compile.Parser.ASTNodes.Visitors.IVisitorP;
 
 public class FuncCallNode extends ExprNode {
     public IdNode Name;

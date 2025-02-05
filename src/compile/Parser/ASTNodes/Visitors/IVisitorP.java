@@ -1,6 +1,6 @@
-package compile.Parser.ASTNodes.Visitor;
+package compile.Parser.ASTNodes.Visitors;
 
-import compile.Parser.ASTNodes.*;
+import compile.Parser.ASTNodes.Nodes.*;
 
 public interface IVisitorP {
     void VisitNode(Node bin);

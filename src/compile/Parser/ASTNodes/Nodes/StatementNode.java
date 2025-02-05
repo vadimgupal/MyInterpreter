@@ -1,9 +1,9 @@
-package compile.Parser.ASTNodes;
+package compile.Parser.ASTNodes.Nodes;
 
-import compile.Parser.ASTNodes.Visitor.IVisitor;
-import compile.Parser.ASTNodes.Visitor.IVisitorP;
+import compile.Parser.ASTNodes.Visitors.IVisitor;
+import compile.Parser.ASTNodes.Visitors.IVisitorP;
 
-public class StatementNode extends Node{
+public abstract class StatementNode extends Node{
     public void Execute(){ };
     @Override
     public <T> T Visit(IVisitor<T> v){

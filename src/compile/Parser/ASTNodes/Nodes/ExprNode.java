@@ -1,9 +1,9 @@
-package compile.Parser.ASTNodes;
+package compile.Parser.ASTNodes.Nodes;
 
-import compile.Parser.ASTNodes.Visitor.IVisitor;
-import compile.Parser.ASTNodes.Visitor.IVisitorP;
+import compile.Parser.ASTNodes.Visitors.IVisitor;
+import compile.Parser.ASTNodes.Visitors.IVisitorP;
 
-public class ExprNode extends Node {
+public abstract class ExprNode extends Node {
     public double Eval(){
         return 0;
     }

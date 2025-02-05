@@ -1,6 +1,6 @@
-package compile.Parser.ASTNodes.Visitor;
+package compile.Parser.ASTNodes.Visitors;
 
-import compile.Parser.ASTNodes.*;
+import compile.Parser.ASTNodes.Nodes.*;
 
 import java.util.stream.Collectors;
 
@@ -23,6 +23,7 @@ public class PrettyPrinterIndentVisitor implements IVisitor<String> {
         indent-=2;
         return "";
     }
+
     @Override
     public String VisitNode(Node n){
         return Ind() + n.Visit(this);

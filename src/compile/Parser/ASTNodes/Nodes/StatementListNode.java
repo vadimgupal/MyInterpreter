@@ -1,7 +1,7 @@
-package compile.Parser.ASTNodes;
+package compile.Parser.ASTNodes.Nodes;
 
-import compile.Parser.ASTNodes.Visitor.IVisitor;
-import compile.Parser.ASTNodes.Visitor.IVisitorP;
+import compile.Parser.ASTNodes.Visitors.IVisitor;
+import compile.Parser.ASTNodes.Visitors.IVisitorP;
 
 import java.util.ArrayList;
 import java.util.List;
