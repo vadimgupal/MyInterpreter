@@ -4,6 +4,7 @@ import compile.Lexer.Position;
 import compile.Parser.ASTNodes.Dictionary;
 import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
+import compile.SemanticException;
 
 public class AssignNode extends StatementNode{
     public IdNode Ident;
@@ -25,7 +26,7 @@ public class AssignNode extends StatementNode{
         return v.VisitAssign(this);
     }
     @Override
-    public void VisitP(IVisitorP v){
+    public void VisitP(IVisitorP v) throws SemanticException {
         v.VisitAssign(this);
     }
 }

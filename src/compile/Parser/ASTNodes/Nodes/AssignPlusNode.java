@@ -4,6 +4,7 @@ import compile.Lexer.Position;
 import compile.Parser.ASTNodes.Dictionary;
 import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
+import compile.SemanticException;
 
 public class AssignPlusNode extends StatementNode {
     public IdNode Ident;
@@ -17,8 +18,8 @@ public class AssignPlusNode extends StatementNode {
 
     @Override
     public void Execute() {
-        double currentValue = Dictionary.VarValues.getOrDefault(Ident.Name, 0.0);
-        double newValue = currentValue + Expr.Eval();
+        Object currentValue = Dictionary.VarValues.getOrDefault(Ident.Name, 0.0);
+        Object newValue = (double)currentValue + (double)Expr.Eval();
         Dictionary.VarValues.put(Ident.Name, newValue);
     }
 
@@ -27,7 +28,7 @@ public class AssignPlusNode extends StatementNode {
         return v.VisitAssignPlus(this);
     }
     @Override
-    public void VisitP(IVisitorP v){
+    public void VisitP(IVisitorP v) throws SemanticException {
         v.VisitAssignPlus(this);
     }
 }

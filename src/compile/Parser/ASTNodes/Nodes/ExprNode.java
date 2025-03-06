@@ -4,7 +4,7 @@ import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
 
 public abstract class ExprNode extends Node {
-    public double Eval(){
+    public Object Eval(){
         return 0;
     }
     @Override

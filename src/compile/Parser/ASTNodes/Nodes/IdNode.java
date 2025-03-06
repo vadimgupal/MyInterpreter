@@ -13,7 +13,7 @@ public class IdNode extends ExprNode{
     }
 
     @Override
-    public double Eval() {
+    public Object Eval() {
         return Dictionary.VarValues.get(Name);
     }
 

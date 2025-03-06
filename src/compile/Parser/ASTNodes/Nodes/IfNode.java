@@ -3,6 +3,7 @@ package compile.Parser.ASTNodes.Nodes;
 import compile.Lexer.Position;
 import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
+import compile.SemanticException;
 
 public class IfNode extends StatementNode {
     public ExprNode Condition;
@@ -16,7 +17,7 @@ public class IfNode extends StatementNode {
 
     @Override
     public void Execute() {
-        if(Condition.Eval() > 0) {
+        if((double)Condition.Eval() > 0) {
             ThenStat.Execute();
         } else if (ElseStat != null){
             ElseStat.Execute();
@@ -28,7 +29,7 @@ public class IfNode extends StatementNode {
         return v.VisitIf(this);
     }
     @Override
-    public void VisitP(IVisitorP v){
+    public void VisitP(IVisitorP v) throws SemanticException {
         v.VisitIf(this);
     }
 }

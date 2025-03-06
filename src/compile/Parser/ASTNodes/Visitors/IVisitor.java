@@ -18,4 +18,6 @@ public interface IVisitor<T> {
     T VisitWhile(WhileNode whn);
     T VisitProcCall(ProcCallNode p);
     T VisitFuncCall(FuncCallNode f);
+    T VisitArray(ArrayLiteral arr);
+    T VisitString(StringLiteral str);
 }

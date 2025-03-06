@@ -3,6 +3,7 @@ package compile.Parser.ASTNodes.Nodes;
 import compile.Lexer.Position;
 import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
+import compile.SemanticException;
 import compile.Types.OpType;
 
 public class BinOpNode extends ExprNode{
@@ -16,16 +17,16 @@ public class BinOpNode extends ExprNode{
     }
 
     @Override
-    public double Eval() {
-        double l=left.Eval();
-        double r= right.Eval();
+    public Object Eval() {
+        Object l=left.Eval();
+        Object r= right.Eval();
         return switch (op) {
-            case opPlus -> l + r;
-            case opMinus -> l - r;
-            case opMultiply -> l * r;
-            case opDivide -> l / r;
-            case opLess -> l < r ? 1 : 0;
-            case opGreater -> l > r ? 1 : 0;
+            case opPlus -> (double)l + (double)r;
+            case opMinus -> (double)l - (double)r;
+            case opMultiply -> (double)l * (double)r;
+            case opDivide -> (double)l / (double)r;
+            case opLess -> (double)l < (double)r ? 1 : 0;
+            case opGreater -> (double)l > (double)r ? 1 : 0;
             default -> 0;
         };
     }

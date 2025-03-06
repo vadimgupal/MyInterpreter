@@ -12,7 +12,7 @@ public class IntNode extends ExprNode{
     }
 
     @Override
-    public double Eval() {
+    public Object Eval() {
         return Value;
     }
 
@@ -20,6 +20,7 @@ public class IntNode extends ExprNode{
     public <T> T Visit(IVisitor<T> v){
         return v.VisitInt(this);
     }
+    @Override
     public void VisitP(IVisitorP v){
         v.VisitInt(this);
     }

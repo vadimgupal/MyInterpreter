@@ -103,4 +103,13 @@ public class PrettyPrinterIndentVisitor implements IVisitor<String> {
         return f.Name.Name+"("+f.Pars.Visit(this)+")";
     }
 
+    @Override
+    public String VisitArray(ArrayLiteral arr) {
+        return String.valueOf(arr.value);
+    }
+
+    @Override
+    public String VisitString(StringLiteral str) {
+        return str.value;
+    }
 }
