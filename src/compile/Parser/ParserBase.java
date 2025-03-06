@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class ParserBase {
     private Lexer lex;
 
-    protected int current=0;
+    protected int current = 0;
     protected Token curToken;
 
     public ParserBase(Lexer lex) throws LexerException {

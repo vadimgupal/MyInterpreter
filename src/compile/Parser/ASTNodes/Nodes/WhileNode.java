@@ -3,6 +3,7 @@ package compile.Parser.ASTNodes.Nodes;
 import compile.Lexer.Position;
 import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
+import compile.SemanticException;
 
 public class WhileNode extends StatementNode {
     public ExprNode Condition;
@@ -16,7 +17,7 @@ public class WhileNode extends StatementNode {
 
     @Override
     public void Execute() {
-        while (Condition.Eval() > 0)
+        while ((double)Condition.Eval() > 0)
             Stat.Execute();
     }
 
@@ -25,7 +26,7 @@ public class WhileNode extends StatementNode {
         return v.VisitWhile(this);
     }
     @Override
-    public void VisitP(IVisitorP v){
+    public void VisitP(IVisitorP v) throws SemanticException {
         v.VisitWhile(this);
     }
 }
