@@ -1,6 +1,8 @@
 package compile.Lexer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Lexer extends LexserBase{
@@ -114,6 +116,12 @@ public class Lexer extends LexserBase{
                 break;
             case '\"' :
                 res = GetString(pos);
+                break;
+            case '[':
+                res = new Token(TokenType.LBracket,pos,"[");
+                break;
+            case ']':
+                res = new Token(TokenType.RBracket,pos,"]");
                 break;
             default:
                 if(Character.isDigit(c))
