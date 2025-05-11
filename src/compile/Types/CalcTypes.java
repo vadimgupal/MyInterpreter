@@ -32,6 +32,8 @@ public class CalcTypes {
             OpType.opNot
     );
 
+    public static final List<OpType> StringOperations = List.of(OpType.strPlus);
+
     public static final Map<OpType,String> OpToStr = new HashMap<>(){{
         put(OpType.opPlus, "+");
         put(OpType.opMinus, "-");
@@ -56,21 +58,28 @@ public class CalcTypes {
         else if(leftvar.equals(SemanticType.ObjectType) &&
                 !(rightexpr.equals(SemanticType.NoType) || rightexpr.equals(SemanticType.BadType)))
             return true;
+        else if(leftvar.equals(SemanticType.StringType) && rightexpr.equals(SemanticType.StringType))
+            return true;
+        else if(leftvar.equals(SemanticType.ArrayType) && rightexpr.equals(SemanticType.ArrayType))
+            return true;
         else
             return false;
     }
 
-    public static SemanticType CalcType(ExprNode ex){
-        if (ex instanceof BinOpNode) {
-            BinOpNode bin = (BinOpNode) ex;
+    public static SemanticType CalcType(ExprNode ex) throws SemanticException {
+        if (ex instanceof BinOpNode bin) {
             SemanticType lt = CalcType(bin.left);
             SemanticType rt = CalcType(bin.right);
 
-            if (ArithmeticOperations.contains(bin.op)) {
+            if(lt.equals(SemanticType.StringType) && rt.equals(SemanticType.StringType)) {
+                if (bin.op.equals(OpType.opPlus)) {
+                    return SemanticType.StringType;
+                } else
+                    return SemanticType.BadType;
+            } else if (ArithmeticOperations.contains(bin.op)) {
                 if (!NumTypes.contains(lt) || !NumTypes.contains(rt)) {
-                    new SemanticException("Операция " + OpToStr.get(bin.op) + " не определена для типов " + lt + " и " + rt,
-                            bin.left.pos);
-                    //return SemanticType.NoType;
+                    //new SemanticException("Операция %s не определена для типов %s и %s".formatted(OpToStr.get(bin.op), lt, rt), bin.left.pos);
+                    return SemanticType.BadType;
                 } else if (bin.op == OpType.opDivide) {
                     return SemanticType.DoubleType;
                 } else if (lt == rt) {
@@ -80,27 +89,33 @@ public class CalcTypes {
                 }
             } else if (LogicalOperations.contains(bin.op)) {
                 if (lt != SemanticType.BoolType || rt != SemanticType.BoolType) {
-                    new SemanticException("Операция " + OpToStr.get(bin.op) + " не определена для типов " + lt + " и " + rt, bin.left.pos);
-                    //return SemanticType.NoType;
+                    //throw new SemanticException("Операция %s не определена для типов %s и %s".formatted(OpToStr.get(bin.op), lt, rt), bin.left.pos);
+                    return SemanticType.BadType;
                 } else {
                     return SemanticType.BoolType;
                 }
             } else if (CompareOperations.contains(bin.op)) {
                 if (!NumTypes.contains(lt) || !NumTypes.contains(rt)) {
-                    new SemanticException("Операция " + OpToStr.get(bin.op) + " не определена для типов " + lt + " и " + rt, bin.left.pos);
-                    //return SemanticType.NoType;
+                    //throw new SemanticException("Операция " + OpToStr.get(bin.op) + " не определена для типов " + lt + " и " + rt, bin.left.pos);
+                    return SemanticType.BadType;
                 } else {
                     return SemanticType.BoolType;
                 }
             }
-        } else if (ex instanceof IdNode) {
-            IdNode id = (IdNode) ex;
+//            else if (StringOperations.contains(bin.op)) {
+//                if(lt != SemanticType.StringType || rt != SemanticType.StringType) {
+//                    throw new SemanticException("Операция " + OpToStr.get(bin.op) + " не определена для типов " + lt + " и " + rt, bin.left.pos);
+//                } else {
+//                    return SemanticType.StringType;
+//                }
+//            }
+        } else if (ex instanceof IdNode id) {
             if (!SymTable.containsKey(id.Name)) {
-                new SemanticException("Идентификатор " + id.Name + " не определен", id.pos);
-                //return SemanticType.NoType;
+                //throw new SemanticException("Идентификатор " + id.Name + " не определен", id.pos);
+                return SemanticType.BadType;
             } else if (SymTable.get(id.Name).Kind != KindType.VarName) {
-                new SemanticException("" + id.Name + " не является переменной", id.pos);
-                //return SemanticType.NoType;
+                //throw new SemanticException(id.Name + " не является переменной", id.pos);
+                return SemanticType.BadType;
             } else {
                 return SymTable.get(id.Name).Typ;
             }
@@ -108,36 +123,69 @@ public class CalcTypes {
             return SemanticType.IntType;
         } else if (ex instanceof DoubleNode) {
             return SemanticType.DoubleType;
-        } else if (ex instanceof FuncCallNode) {
-            FuncCallNode f = (FuncCallNode) ex;
+        } else if (ex instanceof StringLiteral) {
+            return SemanticType.StringType;
+        } else if(ex instanceof ArrayLiteral arr) {
+            // Проверяем, что все элементы массива имеют совместимые типы
+            if (arr.value.lst.isEmpty()) {
+                return SemanticType.ArrayType;
+            }
+
+            SemanticType firstType = CalcType(arr.value.lst.get(0));
+            for (ExprNode elem : arr.value.lst) {
+                SemanticType elemType = CalcType(elem);
+                if (!AssignComparable(firstType, elemType)) {
+                    return SemanticType.BadType;
+                }
+            }
+            return SemanticType.ArrayType;
+        } else if(ex instanceof ArrayIndexNode arrayIndexNode) {
+            SemanticType arrayType = CalcType(arrayIndexNode.arrayName);
+            if(arrayType != SemanticType.ArrayType) {
+                return SemanticType.BadType;
+            }
+
+            SemanticType indexType = CalcType(arrayIndexNode.index);
+            if(indexType != SemanticType.IntType) {
+                return SemanticType.BadType;
+            }
+
+            if (arrayIndexNode.arrayName instanceof IdNode idNode) {
+                SymbolInfo arrayInfo = SymTable.get(idNode.Name);
+                if (arrayInfo != null && arrayInfo.ElementTyp != null) {
+                    return arrayInfo.ElementTyp; // Возвращаем конкретный тип элементов
+                }
+            }
+
+            return SemanticType.ObjectType;
+        } else if (ex instanceof FuncCallNode f) {
             if (!SymTable.containsKey(f.Name.Name)) {
-                new SemanticException("Функция с именем " + f.Name.Name + " не определена", f.Name.pos);
-                //return SemanticType.NoType;
+                //throw new SemanticException("Функция с именем " + f.Name.Name + " не определена", f.Name.pos);
+                return SemanticType.BadType;
             }
             SymbolInfo sym = SymTable.get(f.Name.Name);
             if (sym.Kind != KindType.FuncName) {
-                new SemanticException("Данное имя " + f.Name.Name + " не является именем функции", f.Name.pos);
-                //return SemanticType.NoType;
+                //throw new SemanticException("Данное имя " + f.Name.Name + " не является именем функции", f.Name.pos);
+                return SemanticType.BadType;
             }
             if (sym.Params.size() != f.Pars.lst.size()) {
-                new SemanticException("Несоответствие количества параметров при вызове функции " + f.Name.Name, f.Name.pos);
-                //return SemanticType.NoType;
+                //throw new SemanticException("Несоответствие количества параметров при вызове функции " + f.Name.Name, f.Name.pos);
+                return SemanticType.BadType;
             }
             for (int i = 0; i < sym.Params.size(); i++) {
                 SemanticType tp = CalcType(f.Pars.lst.get(i));
                 if (!AssignComparable(sym.Params.get(i), tp)) {
-                    new SemanticException("Тип аргумента функции " + tp + " не соответствует типу формального параметра " + sym.Params.get(i), f.Name.pos);
-                    //return SemanticType.NoType;
+                    //throw new SemanticException("Тип аргумента функции " + tp + " не соответствует типу формального параметра " + sym.Params.get(i), f.Name.pos);
+                    return SemanticType.BadType;
                 }
             }
             if (sym.Typ == SemanticType.NoType) { // Это процедура
-                new SemanticException("Попытка вызвать процедуру " + f.Name.Name + " как функцию", f.Name.pos);
-                //return SemanticType.NoType;
+                //throw new SemanticException("Попытка вызвать процедуру " + f.Name.Name + " как функцию", f.Name.pos);
+                return SemanticType.BadType;
             }
-            return sym.Typ; // тип возвращаемого значения
+            return sym.Typ;
         }
 
-        // Если ни один из случаев не подошел
-        return SemanticType.NoType;
+        return SemanticType.BadType;
     }
 }
