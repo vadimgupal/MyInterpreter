@@ -5,7 +5,7 @@ import compile.Parser.ASTNodes.Visitors.IVisitorP;
 import compile.SemanticException;
 
 public abstract class StatementNode extends Node{
-    public void Execute(){ };
+    public void Execute(){ }
     @Override
     public <T> T Visit(IVisitor<T> v){
         return v.VisitStatementNode(this);

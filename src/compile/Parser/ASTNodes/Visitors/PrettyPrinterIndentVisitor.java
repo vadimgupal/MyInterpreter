@@ -7,11 +7,7 @@ import java.util.stream.Collectors;
 public class PrettyPrinterIndentVisitor implements IVisitor<String> {
     private int indent = 0;
     public String Ind() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < indent; i++) {
-            sb.append(" ");
-        }
-        return sb.toString();
+        return " ".repeat(Math.max(0, indent));
     }
 
     public String IndInc() {
@@ -83,7 +79,7 @@ public class PrettyPrinterIndentVisitor implements IVisitor<String> {
     @Override
     public String VisitIf(IfNode ifn) {
         String res="if "+ifn.Condition.Visit(this) + " then "+ifn.ThenStat.Visit(this);
-        if (!ifn.equals(null))
+        if (ifn != null)
             res+=" else "+ifn.ElseStat.Visit(this);
         return res;
     }

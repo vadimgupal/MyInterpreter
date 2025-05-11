@@ -68,7 +68,7 @@ public class AutoVisitor implements IVisitorP {
     public void VisitIf(IfNode ifn) throws SemanticException {
         ifn.Condition.VisitP(this);
         ifn.ThenStat.VisitP(this);
-        if(!ifn.ElseStat.equals(null))
+        if(ifn.ElseStat != null)
             ifn.ElseStat.VisitP(this);
     }
 

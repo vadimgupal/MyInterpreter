@@ -52,9 +52,8 @@ public class Parser extends ParserBase {
         else if(IsMatch(TokenType.LBrace)) {
             StatementNode stl = StatementList();
             Requires(TokenType.RBrace);
-            StatementNode res = stl;
-            res.pos = pos;
-            return res;
+            stl.pos = pos;
+            return stl;
         }
         else {
             IdNode id = Ident();

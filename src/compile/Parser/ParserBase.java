@@ -7,11 +7,10 @@ import compile.Lexer.TokenType;
 import compile.SyntaxException;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class ParserBase {
-    private Lexer lex;
+    private final Lexer lex;
 
     protected int current = 0;
     protected Token curToken;

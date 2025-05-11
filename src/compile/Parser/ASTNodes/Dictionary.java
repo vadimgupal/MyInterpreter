@@ -4,6 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Dictionary {
-    public static Map<String, Object> VarValues = new HashMap();
+    public static Map<String, Object> VarValues = new HashMap<>();
 
 }

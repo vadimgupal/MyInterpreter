@@ -17,8 +17,8 @@ public class ProcCallNode extends StatementNode {
 
     @Override
     public void Execute() {
-        if(Name.Name.toLowerCase().equals("print"))
-            System.out.println(Pars.lst.get(0).Eval());
+        if(Name.Name.equalsIgnoreCase("print"))
+            System.out.println(Pars.lst.getFirst().Eval());
     }
 
     @Override

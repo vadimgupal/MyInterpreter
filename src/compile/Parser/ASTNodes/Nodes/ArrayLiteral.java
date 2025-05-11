@@ -16,7 +16,7 @@ public class ArrayLiteral extends ExprNode {
 
     @Override
     public List<Object> Eval() {
-        return value.lst.stream().map(x -> x.Eval()).collect(Collectors.toList());
+        return value.lst.stream().map(ExprNode::Eval).collect(Collectors.toList());
     }
 
     @Override
