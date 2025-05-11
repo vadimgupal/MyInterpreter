@@ -20,4 +20,5 @@ public interface IVisitor<T> {
     T VisitFuncCall(FuncCallNode f);
     T VisitArray(ArrayLiteral arr);
     T VisitString(StringLiteral str);
+    T VisitArrayIndex(ArrayIndexNode ai);
 }

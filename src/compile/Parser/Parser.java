@@ -92,10 +92,16 @@ public class Parser extends ParserBase {
     }
 
     public ExprNode Expr() throws LexerException, SyntaxException, SemanticException {
+        if(IsMatch(TokenType.LBracket)) {
+          ExprListNode exlist = ExprList();
+          Requires(TokenType.RBracket);
+          return new ArrayLiteral(exlist,exlist.pos);
+        }
         ExprNode ex = Comp();
         while(At(TokenType.Greater, TokenType.GreaterEqual,
                 TokenType.Less, TokenType.LessEqual,
-                TokenType.Equal, TokenType.NotEqual)) {
+                TokenType.Equal, TokenType.NotEqual,
+                TokenType.GreaterEqual, TokenType.LessEqual)) {
             Token op = NextLexem();
             ExprNode right = Comp();
             ex = new BinOpNode(ex, right, StringToOpType((String) op.value, op.pos), ex.pos);
@@ -132,6 +138,8 @@ public class Parser extends ParserBase {
             res = new IntNode((int)NextLexem().value, pos);
         } else if(At(TokenType.DoubleLiteral)) {
             res = new DoubleNode((double)NextLexem().value, pos);
+        } else if(At(TokenType.StringLiteral)){
+            res = new StringLiteral((String)NextLexem().value,pos);
         } else if(IsMatch(TokenType.LPar)) {
             res = Expr();
             Requires(TokenType.RPar);
@@ -141,6 +149,10 @@ public class Parser extends ParserBase {
                 ExprListNode exlist = ExprList();
                 res = new FuncCallNode(id, exlist, id.pos);
                 Requires(TokenType.RPar);
+            } else if(IsMatch(TokenType.LBracket)) {
+                ExprNode index = Expr();
+                Requires(TokenType.RBracket);
+                res = new ArrayIndexNode(id, index, pos);
             } else res = id;
         } else throw new SyntaxException("Expected INT or ( or id but "+ PeekToken().typ +" found ", PeekToken().pos);
         return res;
