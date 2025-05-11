@@ -5,6 +5,7 @@ public enum SemanticType {
     DoubleType,
     BoolType,
     StringType,
+    ArrayType,
     ObjectType,
     BadType,
     NoType

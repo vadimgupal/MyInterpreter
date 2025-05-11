@@ -13,5 +13,6 @@ public enum OpType {
     opNotEqual,
     opAnd,
     opOr,
-    opNot
+    opNot,
+    strPlus
 }
