@@ -5,10 +5,12 @@ import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
 import compile.SemanticException;
 import compile.Types.OpType;
+import compile.Types.SemanticType;
 
 public class BinOpNode extends ExprNode{
     public ExprNode left, right;
     public OpType op;
+    public SemanticType type;
     public BinOpNode(ExprNode l, ExprNode r, OpType o, Position pos) {
         this.left=l;
         this.right=r;
@@ -16,18 +18,58 @@ public class BinOpNode extends ExprNode{
         this.pos=pos;
     }
 
+    private SemanticType getType(Object ex) {
+        if(ex instanceof StringLiteral sl)
+            return SemanticType.StringType;
+        else if(ex instanceof DoubleNode dn)
+            return SemanticType.DoubleType;
+        else if(ex instanceof IntNode i)
+            return SemanticType.IntType;
+        else return SemanticType.ObjectType;
+    }
+
     @Override
     public Object Eval() {
-        Object l=left.Eval();
-        Object r= right.Eval();
+        Object leftVal = left.Eval();
+        Object rightVal = right.Eval();
+
+        if(leftVal instanceof String && rightVal instanceof String && op == OpType.opPlus) {
+            return (String)leftVal + (String)rightVal;
+        }
+
+        if(leftVal instanceof Integer && rightVal instanceof Integer) {
+            int l = (Integer)leftVal;
+            int r = (Integer)rightVal;
+            return switch (op) {
+                case opPlus -> l + r;
+                case opMinus -> l - r;
+                case opMultiply -> l * r;
+                case opDivide -> l / r;
+                case opLess -> l < r;
+                case opGreater -> l > r;
+                case opGreaterEqual -> l >= r;
+                case opLessEqual -> l <= r;
+                case opEqual -> l == r;
+                case opNotEqual -> l != r;
+                default -> throw new RuntimeException("Unsupported operation for integers: " + op);
+            };
+        }
+
+        double l = leftVal instanceof Integer ? (Integer)leftVal : (Double)leftVal;
+        double r = rightVal instanceof Integer ? (Integer)rightVal : (Double)rightVal;
+
         return switch (op) {
-            case opPlus -> (double)l + (double)r;
-            case opMinus -> (double)l - (double)r;
-            case opMultiply -> (double)l * (double)r;
-            case opDivide -> (double)l / (double)r;
-            case opLess -> (double)l < (double)r ? 1 : 0;
-            case opGreater -> (double)l > (double)r ? 1 : 0;
-            default -> 0;
+            case opPlus -> l + r;
+            case opMinus -> l - r;
+            case opMultiply -> l * r;
+            case opDivide -> l / r;
+            case opLess -> l < r;
+            case opGreater -> l > r;
+            case opGreaterEqual -> l >= r;
+            case opLessEqual -> l <= r;
+            case opEqual -> l == r;
+            case opNotEqual -> l != r;
+            default -> throw new RuntimeException("Unsupported operation: " + op);
         };
     }
 
@@ -36,7 +78,7 @@ public class BinOpNode extends ExprNode{
         return v.VisitBinOp(this);
     }
     @Override
-    public void VisitP(IVisitorP v){
+    public void VisitP(IVisitorP v) throws SemanticException {
         v.VisitBinOp(this);
     }
 }
