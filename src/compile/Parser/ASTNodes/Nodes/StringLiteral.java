@@ -14,6 +14,4 @@ public class StringLiteral extends ExprNode {
     public Object Eval() {
         return value;
     }
-
-
 }

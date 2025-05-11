@@ -2,6 +2,7 @@ package compile.Parser.ASTNodes.Nodes;
 
 import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
+import compile.SemanticException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ public class ExprListNode extends Node{
         return v.VisitExprList(this);
     }
     @Override
-    public void VisitP(IVisitorP v){
+    public void VisitP(IVisitorP v) throws SemanticException {
         v.VisitExprList(this);
     }
 }

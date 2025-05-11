@@ -20,7 +20,7 @@ public class AutoVisitor implements IVisitorP {
     }
 
     @Override
-    public void VisitBinOp(BinOpNode bin) {
+    public void VisitBinOp(BinOpNode bin) throws SemanticException {
         bin.left.VisitP(this);
         bin.right.VisitP(this);
     }
@@ -32,7 +32,7 @@ public class AutoVisitor implements IVisitorP {
     }
 
     @Override
-    public void VisitExprList(ExprListNode exlist) {
+    public void VisitExprList(ExprListNode exlist) throws SemanticException {
         for(ExprNode x : exlist.lst)
             x.VisitP(this);
     }
@@ -84,7 +84,7 @@ public class AutoVisitor implements IVisitorP {
     }
 
     @Override
-    public void VisitFuncCall(FuncCallNode f) {
+    public void VisitFuncCall(FuncCallNode f) throws SemanticException {
         f.Pars.VisitP(this);
     }
 
@@ -95,6 +95,11 @@ public class AutoVisitor implements IVisitorP {
 
     @Override
     public void VisitString(StringLiteral str) {
+
+    }
+
+    @Override
+    public void VisitArrayIndex(ArrayIndexNode ai) throws SemanticException {
 
     }
 }

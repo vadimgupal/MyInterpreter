@@ -112,4 +112,9 @@ public class PrettyPrinterIndentVisitor implements IVisitor<String> {
     public String VisitString(StringLiteral str) {
         return str.value;
     }
+
+    @Override
+    public String VisitArrayIndex(ArrayIndexNode ai) {
+        return "";
+    }
 }

@@ -3,6 +3,7 @@ package compile.Parser.ASTNodes.Nodes;
 import compile.Lexer.Position;
 import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
+import compile.SemanticException;
 
 public class FuncCallNode extends ExprNode {
     public IdNode Name;
@@ -18,7 +19,7 @@ public class FuncCallNode extends ExprNode {
         return v.VisitFuncCall(this);
     }
     @Override
-    public void VisitP(IVisitorP v){
+    public void VisitP(IVisitorP v) throws SemanticException {
         v.VisitFuncCall(this);
     }
 }

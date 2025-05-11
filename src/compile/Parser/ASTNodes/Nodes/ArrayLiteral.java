@@ -5,17 +5,18 @@ import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ArrayLiteral extends ExprNode {
-    public List<ExprNode> value;
-    public ArrayLiteral(List<ExprNode> val, Position pos) {
+    public ExprListNode value;
+    public ArrayLiteral(ExprListNode val, Position pos) {
         this.value=val;
         this.pos=pos;
     }
 
     @Override
-    public List<ExprNode> Eval() {
-        return value;
+    public List<Object> Eval() {
+        return value.lst.stream().map(x -> x.Eval()).collect(Collectors.toList());
     }
 
     @Override

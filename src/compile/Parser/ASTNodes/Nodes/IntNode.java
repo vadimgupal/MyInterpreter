@@ -12,7 +12,7 @@ public class IntNode extends ExprNode{
     }
 
     @Override
-    public Object Eval() {
+    public Integer Eval() {
         return Value;
     }
 
