@@ -25,8 +25,9 @@ public class Main {
     }
     public static void main(String[] args) throws LexerException {
         String s= """
-                        i=[[1,2],[3,4]];
-                        print(i)
+                        b=[1,2,3];
+                        a=[[1,2],[3,4]];
+                        print(b[a[0][0] - 1])
                 """;
         Lexer lex = new Lexer(s);
         try{
