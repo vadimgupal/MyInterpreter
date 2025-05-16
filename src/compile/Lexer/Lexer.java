@@ -58,7 +58,7 @@ public class Lexer extends LexserBase{
                 if(IsMatch('='))
                     res = new Token(TokenType.AssignMinus, pos, "-=");
                 else
-                    res = new Token(TokenType.Minus, pos, "+");
+                    res = new Token(TokenType.Minus, pos, "-");
                 break;
             case '*' :
                 if(IsMatch('='))

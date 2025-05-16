@@ -29,48 +29,51 @@ public class BinOpNode extends ExprNode{
 
     @Override
     public Object Eval() {
-        Object leftVal = left.Eval();
+        Object leftVal  = left.Eval();
         Object rightVal = right.Eval();
 
-        if(leftVal instanceof String && rightVal instanceof String && op == OpType.opPlus) {
-            return leftVal + (String)rightVal;
+        // Строковая конкатенация
+        if (leftVal instanceof String && rightVal instanceof String && op == OpType.opPlus) {
+            return ((String)leftVal) + ((String)rightVal);
         }
 
-//        if(leftVal instanceof Integer && rightVal instanceof Integer) {
-//            int l = (Integer)leftVal;
-//            int r = (Integer)rightVal;
-//            return switch (op) {
-//                case opPlus -> l + r;
-//                case opMinus -> l - r;
-//                case opMultiply -> l * r;
-//                case opDivide -> l / r;
-//                case opLess -> l < r;
-//                case opGreater -> l > r;
-//                case opGreaterEqual -> l >= r;
-//                case opLessEqual -> l <= r;
-//                case opEqual -> l == r;
-//                case opNotEqual -> l != r;
-//                default -> throw new RuntimeException("Unsupported operation for integers: " + op);
-//            };
-//        }
+        // --- Новый блок: оба интера -- целочисленное исполнение ---
+        if (leftVal  instanceof Integer && rightVal instanceof Integer) {
+            int l = (Integer) leftVal;
+            int r = (Integer) rightVal;
+            return switch (op) {
+                case opPlus         -> l + r;
+                case opMinus        -> l - r;
+                case opMultiply     -> l * r;
+                case opDivide       -> l / r;              // целочисленное деление
+                case opLess         -> l < r;
+                case opGreater      -> l > r;
+                case opLessEqual    -> l <= r;
+                case opGreaterEqual -> l >= r;
+                case opEqual        -> l == r;
+                case opNotEqual     -> l != r;
+                default             -> throw new RuntimeException("Unsupported op for ints: " + op);
+            };
+        }
 
-        double l = leftVal instanceof Integer ? (Integer)leftVal : (double) leftVal;
-        double r = rightVal instanceof Integer ? (Integer)rightVal : (double)rightVal;
-
+        // --- Старая ветка для смешанных / вещественных ---
+        double ld = leftVal  instanceof Integer ? (Integer)leftVal  : (double)leftVal;
+        double rd = rightVal instanceof Integer ? (Integer)rightVal : (double)rightVal;
         return switch (op) {
-            case opPlus -> l + r;
-            case opMinus -> l - r;
-            case opMultiply -> l * r;
-            case opDivide -> l / r;
-            case opLess -> l < r;
-            case opGreater -> l > r;
-            case opGreaterEqual -> l >= r;
-            case opLessEqual -> l <= r;
-            case opEqual -> l == r;
-            case opNotEqual -> l != r;
-            default -> throw new RuntimeException("Unsupported operation: " + op);
+            case opPlus         -> ld + rd;
+            case opMinus        -> ld - rd;
+            case opMultiply     -> ld * rd;
+            case opDivide       -> ld / rd;
+            case opLess         -> ld < rd;
+            case opGreater      -> ld > rd;
+            case opLessEqual    -> ld <= rd;
+            case opGreaterEqual -> ld >= rd;
+            case opEqual        -> ld == rd;
+            case opNotEqual     -> ld != rd;
+            default             -> throw new RuntimeException("Unsupported operation: " + op);
         };
     }
+
 
     @Override
     public <T> T Visit(IVisitor<T> v){

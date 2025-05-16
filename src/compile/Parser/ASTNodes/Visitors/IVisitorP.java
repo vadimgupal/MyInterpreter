@@ -12,7 +12,7 @@ public interface IVisitorP {
     void VisitExprList(ExprListNode exlist) throws SemanticException;
     void VisitInt(IntNode n);
     void VisitDouble(DoubleNode d);
-    void VisitId(IdNode id);
+    void VisitId(IdNode id) throws SemanticException;
     void VisitAssign(AssignNode ass) throws SemanticException;
     void VisitAssignPlus(AssignPlusNode ass) throws SemanticException;
     void VisitIf(IfNode ifn) throws SemanticException;

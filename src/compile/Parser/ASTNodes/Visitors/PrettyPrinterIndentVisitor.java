@@ -68,12 +68,12 @@ public class PrettyPrinterIndentVisitor implements IVisitor<String> {
 
     @Override
     public String VisitAssign(AssignNode ass) {
-        return Ind()+ass.Ident.Name+" = "+ass.Expr.Visit(this);
+        return Ind()+ass.LValue.getName()+" = "+ass.Expr.Visit(this);
     }
 
     @Override
     public String VisitAssignPlus(AssignPlusNode ass) {
-        return Ind()+ass.Ident.Name+" += "+ass.Expr.Visit(this);
+        return Ind()+ass.LValue.getName()+" += "+ass.Expr.Visit(this);
     }
 
     @Override

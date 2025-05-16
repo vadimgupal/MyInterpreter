@@ -48,19 +48,19 @@ public class AutoVisitor implements IVisitorP {
     }
 
     @Override
-    public void VisitId(IdNode id) {
+    public void VisitId(IdNode id) throws SemanticException {
 
     }
 
     @Override
     public void VisitAssign(AssignNode ass) throws SemanticException {
-        ass.Ident.VisitP(this);
+        ass.LValue.VisitP(this);
         ass.Expr.VisitP(this);
     }
 
     @Override
     public void VisitAssignPlus(AssignPlusNode ass) throws SemanticException {
-        ass.Ident.VisitP(this);
+        ass.LValue.VisitP(this);
         ass.Expr.VisitP(this);
     }
 
