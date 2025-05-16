@@ -7,87 +7,170 @@ import compile.Types.*;
 public class SemanticCheckVisitor extends AutoVisitor {
     @Override
     public void VisitAssign(AssignNode ass) throws SemanticException {
-        // Сначала вычисляем тип выражения справа
         SemanticType exprType = CalcTypes.CalcType(ass.Expr);
         if (exprType == SemanticType.BadType) {
-            throw new SemanticException("Несоответствие типов", ass.Ident.pos);
-        }
-
-        // Если переменная не существует - создаем новую запись
-        if (!SymbolTable.SymTable.containsKey(ass.Ident.Name)) {
-            SymbolInfo info = new SymbolInfo(
-                    ass.Ident.Name,
-                    KindType.VarName,
-                    exprType
+            throw new SemanticException(
+                    "Несоответствие типов при присваивании",
+                    ass.LValue.getPos()
             );
-
-            // Для массивов дополнительно сохраняем тип элементов
-            if (ass.Expr instanceof ArrayLiteral arrayLiteral &&
-                    !arrayLiteral.value.lst.isEmpty()) {
-                info.ElementTyp = CalcTypes.CalcType(arrayLiteral.value.lst.getFirst());
-            }
-
-            SymbolTable.SymTable.put(ass.Ident.Name, info);
         }
-        // Если переменная существует - проверяем типы
-        else {
-            SymbolInfo existingInfo = SymbolTable.SymTable.get(ass.Ident.Name);
 
-            // Проверяем что это переменная
-            if (existingInfo.Kind != KindType.VarName) {
-                throw new SemanticException(
-                        ass.Ident.Name + " не является именем переменной",
-                        ass.Ident.pos
-                );
+        // 2) Обработка двух видов L-value: IdNode и ArrayIndexNode
+        if (ass.LValue instanceof IdNode id) {
+            String name = id.Name;
+
+            // 2.1) Объявление новой переменной
+            if (!SymbolTable.SymTable.containsKey(name)) {
+                SymbolInfo info = new SymbolInfo(name, KindType.VarName, exprType);
+                // Если сразу присваивается ArrayLiteral — фиксируем элементный тип
+                if (exprType.isArray() && ass.Expr instanceof ArrayLiteral al) {
+                    info.ElementTyp = al.value.lst.isEmpty()
+                            ? SemanticType.ObjectType
+                            : CalcTypes.CalcType(al.value.lst.getFirst());
+                }
+                SymbolTable.SymTable.put(name, info);
             }
+            // 2.2) Существующая переменная
+            else {
+                SymbolInfo existing = SymbolTable.SymTable.get(name);
 
-            // Основная проверка совместимости типов
-            if (!CalcTypes.AssignComparable(existingInfo.Typ, exprType)) {
-                throw new SemanticException(
-                        "Переменной " + ass.Ident.Name + " типа " + existingInfo.Typ +
-                                " нельзя присвоить выражение типа " + exprType,
-                        ass.Ident.pos
-                );
-            }
-
-            // Для массивов дополнительно проверяем тип элементов
-            if (exprType == SemanticType.ArrayType &&
-                    ass.Expr instanceof ArrayLiteral arrayLiteral) {
-
-                SemanticType newElementType = !arrayLiteral.value.lst.isEmpty()
-                        ? CalcTypes.CalcType(arrayLiteral.value.lst.getFirst())
-                        : SemanticType.ObjectType;
-
-                if (existingInfo.ElementTyp != null &&
-                        !CalcTypes.AssignComparable(existingInfo.ElementTyp, newElementType)) {
+                if (existing.Kind != KindType.VarName) {
                     throw new SemanticException(
-                            "Несовместимость типов элементов массива. Ожидается " +
-                                    existingInfo.ElementTyp + ", получен " + newElementType,
-                            ass.Ident.pos
+                            name + " не является именем переменной",
+                            id.pos
                     );
+                }
+                if (!CalcTypes.AssignComparable(existing.Typ, exprType)) {
+                    throw new SemanticException(
+                            "Переменной " + name + " типа " + existing.Typ +
+                                    " нельзя присвоить выражение типа " + exprType,
+                            id.pos
+                    );
+                }
+                // Для массивов проверяем элементный тип
+                if (existing.Typ.isArray()
+                        && exprType.isArray()
+                        && ass.Expr instanceof ArrayLiteral al2) {
+
+                    SemanticType newElem = al2.value.lst.isEmpty()
+                            ? SemanticType.ObjectType
+                            : CalcTypes.CalcType(al2.value.lst.getFirst());
+
+                    if (existing.ElementTyp != null
+                            && !CalcTypes.AssignComparable(existing.ElementTyp, newElem)) {
+                        throw new SemanticException(
+                                "Несовместимость типов элементов массива. Ожидался " +
+                                        existing.ElementTyp + ", получен " + newElem,
+                                id.pos
+                        );
+                    }
                 }
             }
         }
+        else if (ass.LValue instanceof ArrayIndexNode ai) {
+            // 2.3.1) Проверяем синтаксис и существование массива + индекс
+            ai.arrayName.VisitP(this);
+            ai.index.VisitP(this);
 
-        // Рекурсивно проверяем выражение
+            // 2.3.2) Берём информацию о массиве
+            String arrName = ai.arrayName.getName();
+            SymbolInfo arrInfo = SymbolTable.SymTable.get(arrName);
+            if (arrInfo == null || !arrInfo.Typ.isArray()) {
+                throw new SemanticException(
+                        arrName + " не является массивом",
+                        ai.arrayName.getPos()
+                );
+            }
+            // 2.3.3) Сравниваем элементный тип
+            SemanticType newElemType = exprType;
+            if (arrInfo.ElementTyp != null
+                    && !CalcTypes.AssignComparable(arrInfo.ElementTyp, newElemType)) {
+                throw new SemanticException(
+                        "Несовместимость типов элементов массива. Ожидался " +
+                                arrInfo.ElementTyp + ", получен " + newElemType,
+                        ai.arrayName.getPos()
+                );
+            }
+            // 2.3.4) Если ещё не было ElementTyp — сохраняем
+            if (arrInfo.ElementTyp == null) {
+                arrInfo.ElementTyp = newElemType;
+            }
+        }
+        else {
+            throw new SemanticException(
+                    "Нельзя присваивать в выражение типа " +
+                            ass.LValue.getClass().getSimpleName(),
+                    ass.LValue.getPos()
+            );
+        }
+
+        // 3) Рекурсивно проверяем RHS-выражение
         ass.Expr.VisitP(this);
     }
 
     @Override
     public void VisitAssignPlus(AssignPlusNode ass) throws SemanticException {
-        if (!SymbolTable.SymTable.containsKey(ass.Ident.Name)) {
-            throw new SemanticException("Переменная " + ass.Ident.Name + " не определена ", ass.Ident.pos);
-        } else {
-            if(SymbolTable.SymTable.get(ass.Ident.Name).Kind!=KindType.VarName)
-                throw new SemanticException(ass.Ident.Name+" не является именем переменной",ass.Ident.pos);
-            SemanticType typ = CalcTypes.CalcType(ass.Expr);
-            SemanticType idtyp = SymbolTable.SymTable.get(ass.Ident.Name).Typ;
-            if(!SymbolTable.NumTypes.contains(idtyp))
-                throw new SemanticException("Операция += не определена для типа "+idtyp,ass.Ident.pos);
-            if(!CalcTypes.AssignComparable(idtyp,typ))
-                throw new SemanticException("Переменной "+ass.Ident.Name+" типа "+idtyp+" нельзя += выражение типа "+typ,ass.Ident.pos);
-
+        // 1) LValue может быть IdNode или ArrayIndexNode — проверяем оба
+        if (ass.LValue instanceof IdNode id) {
+            // Проверяем, что переменная определена и это VarName
+            if (!SymbolTable.SymTable.containsKey(id.Name)) {
+                throw new SemanticException(
+                        "Переменная " + id.Name + " не определена",
+                        id.pos
+                );
+            }
+            SymbolInfo info = SymbolTable.SymTable.get(id.Name);
+            if (info.Kind != KindType.VarName) {
+                throw new SemanticException(
+                        id.Name + " не является именем переменной",
+                        id.pos
+                );
+            }
         }
+        else if (ass.LValue instanceof ArrayIndexNode ai) {
+            // Проверяем корректность массива и индекса
+            ai.arrayName.VisitP(this);
+            ai.index.VisitP(this);
+            // Убедимся, что это массив
+            SymbolInfo arrInfo = SymbolTable.SymTable.get(ai.arrayName.getName());
+            if (arrInfo == null || !arrInfo.Typ.isArray()) {
+                throw new SemanticException(
+                        ai.arrayName.getName() + " не является массивом",
+                        ai.arrayName.getPos()
+                );
+            }
+        }
+        else {
+            throw new SemanticException(
+                    "Нельзя использовать += с " +
+                            ass.LValue.getClass().getSimpleName(),
+                    ass.LValue.getPos()
+            );
+        }
+
+        // 2) Получаем тип LValue через CalcType (для a[i] — элемент массива)
+        SemanticType leftType = CalcTypes.CalcType((ExprNode) ass.LValue);
+        SemanticType rightType = CalcTypes.CalcType(ass.Expr);
+
+        // 3) Проверяем, что это число
+        if (!SymbolTable.NumTypes.contains(leftType)) {
+            throw new SemanticException(
+                    "Операция += не определена для типа " + leftType,
+                    ass.LValue.getPos()
+            );
+        }
+        // 4) Проверяем совместимость
+        if (!CalcTypes.AssignComparable(leftType, rightType)) {
+            throw new SemanticException(
+                    "Переменной " + ass.LValue.getName() +
+                            " типа " + leftType +
+                            " нельзя += выражение типа " + rightType,
+                    ass.LValue.getPos()
+            );
+        }
+
+        // 5) Рекурсивно проверяем RHS
+        ass.Expr.VisitP(this);
     }
 
     @Override
@@ -133,25 +216,21 @@ public class SemanticCheckVisitor extends AutoVisitor {
     }
 
     @Override
-    public void VisitArrayIndex(ArrayIndexNode arrIndex) throws SemanticException {
-        // Проверяем, что переменная существует
-        if (!SymbolTable.SymTable.containsKey(arrIndex.arrayName.Name)) {
-            throw new SemanticException("Массив " + arrIndex.arrayName.Name + " не определен", arrIndex.arrayName.pos);
+    public void VisitArrayIndex(ArrayIndexNode ai) throws SemanticException {
+        // Сначала проверяем имя массива как IdNode
+        ai.arrayName.VisitP(this);
+
+        // Проверяем, что тип в таблице — ArrayType
+        SymbolInfo info = SymbolTable.SymTable.get(ai.arrayName.getName());
+        if (info.Typ.isArray()) {
+            throw new SemanticException(ai.arrayName.getName() + " не является массивом", ai.arrayName.getPos());
         }
 
-        // Проверяем, что это действительно массив
-        SemanticType arrayType = SymbolTable.SymTable.get(arrIndex.arrayName.Name).Typ;
-        if (arrayType != SemanticType.ArrayType) {
-            throw new SemanticException(arrIndex.arrayName.Name + " не является массивом", arrIndex.arrayName.pos);
+        // Проверяем индекс как выражение
+        ai.index.VisitP(this);
+        SemanticType idxType = CalcTypes.CalcType(ai.index);
+        if (idxType != SemanticType.IntType) {
+            throw new SemanticException("Индекс массива должен быть целым", ai.index.pos);
         }
-
-        // Проверяем тип индекса
-        SemanticType indexType = CalcTypes.CalcType(arrIndex.index);
-        if (indexType != SemanticType.IntType) {
-            throw new SemanticException("Индекс массива должен быть целым числом", arrIndex.index.pos);
-        }
-
-        // Рекурсивно проверяем индексное выражение
-        arrIndex.index.VisitP(this);
     }
 }

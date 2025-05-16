@@ -50,20 +50,16 @@ public class CalcTypes {
         put(OpType.opNot, "!");
     }};
 
-    public static boolean AssignComparable(SemanticType leftvar, SemanticType rightexpr) {
-        if(leftvar.equals(rightexpr))
-            return true;
-        else if(leftvar.equals(SemanticType.DoubleType) && rightexpr.equals(SemanticType.IntType))
-            return true;
-        else if(leftvar.equals(SemanticType.ObjectType) &&
-                !(rightexpr.equals(SemanticType.NoType) || rightexpr.equals(SemanticType.BadType)))
-            return true;
-        else if(leftvar.equals(SemanticType.StringType) && rightexpr.equals(SemanticType.StringType))
-            return true;
-        else if(leftvar.equals(SemanticType.ArrayType) && rightexpr.equals(SemanticType.ArrayType))
-            return true;
-        else
-            return false;
+    public static boolean AssignComparable(SemanticType L, SemanticType R) {
+        if (L.equals(R)) return true;
+        if (L == SemanticType.DoubleType && R == SemanticType.IntType) return true;
+        if (L == SemanticType.ObjectType
+                && R != SemanticType.NoType && R != SemanticType.BadType) return true;
+        // если оба массивы — рекурсивно сравним элементные типы
+        if (L.isArray() && R.isArray()) {
+            return AssignComparable(L.getElementType(), R.getElementType());
+        }
+        return false;
     }
 
     public static SemanticType CalcType(ExprNode ex) throws SemanticException {
@@ -128,20 +124,20 @@ public class CalcTypes {
         } else if(ex instanceof ArrayLiteral arr) {
             // Проверяем, что все элементы массива имеют совместимые типы
             if (arr.value.lst.isEmpty()) {
-                return SemanticType.ArrayType;
+                return SemanticType.arrayOf(SemanticType.ObjectType);
             }
 
-            SemanticType firstType = CalcType(arr.value.lst.get(0));
+            SemanticType firstType = CalcType(arr.value.lst.getFirst());
             for (ExprNode elem : arr.value.lst) {
                 SemanticType elemType = CalcType(elem);
                 if (!AssignComparable(firstType, elemType)) {
                     return SemanticType.BadType;
                 }
             }
-            return SemanticType.ArrayType;
+            return SemanticType.arrayOf(firstType);
         } else if(ex instanceof ArrayIndexNode arrayIndexNode) {
-            SemanticType arrayType = CalcType(arrayIndexNode.arrayName);
-            if(arrayType != SemanticType.ArrayType) {
+            SemanticType container  = CalcType((ExprNode) arrayIndexNode.arrayName);
+            if(!container.isArray()) {
                 return SemanticType.BadType;
             }
 
@@ -150,14 +146,7 @@ public class CalcTypes {
                 return SemanticType.BadType;
             }
 
-            if (arrayIndexNode.arrayName instanceof IdNode idNode) {
-                SymbolInfo arrayInfo = SymTable.get(idNode.Name);
-                if (arrayInfo != null && arrayInfo.ElementTyp != null) {
-                    return arrayInfo.ElementTyp; // Возвращаем конкретный тип элементов
-                }
-            }
-
-            return SemanticType.ObjectType;
+            return container.getElementType();
         } else if (ex instanceof FuncCallNode f) {
             if (!SymTable.containsKey(f.Name.Name)) {
                 //throw new SemanticException("Функция с именем " + f.Name.Name + " не определена", f.Name.pos);
