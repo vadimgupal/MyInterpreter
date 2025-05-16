@@ -56,24 +56,40 @@ public class Parser extends ParserBase {
             return stl;
         }
         else {
-            IdNode id = Ident();
+            LValueNode lvalue = LValue();
+            //IdNode id = Ident();
             if(IsMatch(TokenType.Assign)){
                 ExprNode ex = Expr();
-                return new AssignNode(id, ex, pos);
+                return new AssignNode(lvalue, ex, pos);
             }
             else if(IsMatch(TokenType.AssignPlus)) {
                 ExprNode ex = Expr();
-                return new AssignPlusNode(id, ex, pos);
+                return new AssignPlusNode(lvalue, ex, pos);
             }
             else if(IsMatch(TokenType.LPar)) {
                 ExprListNode exlist = ExprList();
-                ProcCallNode res = new ProcCallNode(id, exlist, pos);
+                ProcCallNode res = new ProcCallNode((IdNode) lvalue, exlist, pos);
                 Requires(TokenType.RPar);
                 return res;
             }
             else ExeptedError(TokenType.Assign, TokenType.AssignPlus, TokenType.LPar);
         }
         return null;
+    }
+
+    public LValueNode LValue() throws SyntaxException, LexerException, SemanticException {
+        Position pos = CurrentToken().pos;
+        LValueNode node = Ident();  // Получаем идентификатор
+
+        while (IsMatch(TokenType.LBracket)) {
+            ExprNode index = Expr();
+            Requires(TokenType.RBracket);
+            // теперь базовым узлом становится обращение к элементу
+            node = new ArrayIndexNode(node, index, pos);
+        }
+
+        // Иначе это просто переменная
+        return node;
     }
 
     public ExprListNode ExprList() throws LexerException, SyntaxException, SemanticException {
@@ -132,30 +148,51 @@ public class Parser extends ParserBase {
 
     public ExprNode Factor() throws LexerException, SyntaxException, SemanticException {
         Position pos = CurrentToken().pos;
-        ExprNode res;
-        if(At(TokenType.Int)) {
-            res = new IntNode((int)NextLexem().value, pos);
-        } else if(At(TokenType.DoubleLiteral)) {
-            res = new DoubleNode((double)NextLexem().value, pos);
-        } else if(At(TokenType.StringLiteral)){
-            res = new StringLiteral((String)NextLexem().value,pos);
-        } else if(IsMatch(TokenType.LPar)) {
-            res = Expr();
+
+        if (At(TokenType.Int)) {
+            return new IntNode((int) NextLexem().value, pos);
+        }
+        if (At(TokenType.DoubleLiteral)) {
+            return new DoubleNode((double) NextLexem().value, pos);
+        }
+        if (At(TokenType.StringLiteral)) {
+            return new StringLiteral((String) NextLexem().value, pos);
+        }
+
+        // 3) Группа в скобках: (Expr)
+        if (IsMatch(TokenType.LPar)) {
+            ExprNode inside = Expr();
             Requires(TokenType.RPar);
-        } else if(At(TokenType.Id)) {
+            return inside;
+        }
+
+        // 4) Идентификатор: возможен вызов функции или цепочка [idx]
+        if (At(TokenType.Id)) {
             IdNode id = Ident();
-            if(IsMatch(TokenType.LPar)) {
+
+            // 4.1) Вызов функции
+            if (IsMatch(TokenType.LPar)) {
                 ExprListNode exlist = ExprList();
-                res = new FuncCallNode(id, exlist, id.pos);
                 Requires(TokenType.RPar);
-            } else if(IsMatch(TokenType.LBracket)) {
-                ExprNode index = Expr();
+                return new FuncCallNode(id, exlist, id.pos);
+            }
+
+            // 4.2) Цепочка индексов: a, a[i], a[i][j], ...
+            LValueNode lv = id;
+            while (IsMatch(TokenType.LBracket)) {
+                ExprNode idx = Expr();
                 Requires(TokenType.RBracket);
-                res = new ArrayIndexNode(id, index, pos);
-            } else res = id;
-        } else throw new SyntaxException("Expected INT or ( or id but "+ PeekToken().typ +" found ", PeekToken().pos);
-        return res;
+                lv = new ArrayIndexNode(lv, idx, pos);
+            }
+            return (ExprNode) lv;
+        }
+
+        throw new SyntaxException(
+                "Expected literal, (…), id or […], but found " + PeekToken().typ,
+                PeekToken().pos
+        );
     }
+
 
     private OpType StringToOpType(String op, Position pos) throws SemanticException {
         return switch (op) {

@@ -7,18 +7,18 @@ import compile.Parser.ASTNodes.Visitors.IVisitorP;
 import compile.SemanticException;
 
 public class AssignNode extends StatementNode{
-    public IdNode Ident;
+    public LValueNode LValue;
     public ExprNode Expr;
 
-    public AssignNode(IdNode ident, ExprNode ExprNode, Position pos) {
-        this.Ident = ident;
+    public AssignNode(LValueNode lvalue, ExprNode ExprNode, Position pos) {
+        this.LValue = lvalue;
         this.Expr = ExprNode;
         this.pos = pos;
     }
 
     @Override
     public void Execute() {
-        Dictionary.VarValues.put(Ident.Name, Expr.Eval());
+        LValue.setValue(Expr.Eval());
     }
 
     @Override

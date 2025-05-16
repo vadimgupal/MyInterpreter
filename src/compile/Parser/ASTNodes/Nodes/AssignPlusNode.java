@@ -6,22 +6,66 @@ import compile.Parser.ASTNodes.Visitors.IVisitor;
 import compile.Parser.ASTNodes.Visitors.IVisitorP;
 import compile.SemanticException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AssignPlusNode extends StatementNode {
-    public IdNode Ident;
+    public LValueNode LValue;
     public ExprNode Expr;
 
-    public AssignPlusNode(IdNode Ident, ExprNode Expr, Position pos) {
-        this.Ident = Ident;
+    public AssignPlusNode(LValueNode lvalue, ExprNode Expr, Position pos) {
+        this.LValue = lvalue;
         this.Expr = Expr;
         this.pos = pos;
     }
 
     @Override
     public void Execute() {
-        Object currentValue = Dictionary.VarValues.getOrDefault(Ident.Name, 0.0);
-        Object newValue = (double)currentValue + (double)Expr.Eval();
-        Dictionary.VarValues.put(Ident.Name, newValue);
+        // 1) Собираем все индексы и вычленяем «корневое» имя переменной
+        LValueNode node = LValue;
+        // будем хранить индексы в порядке от корня к листу
+        List<ExprNode> indices = new ArrayList<>();
+        while (node instanceof ArrayIndexNode ai) {
+            // собираем индекс в начало списка
+            indices.add(0, ai.index);
+            // идём вверх по дереву
+            node = ai.arrayName;
+        }
+        // в node теперь обязательно IdNode
+        String varName = ((IdNode) node).Name;
+
+        // 2) Получаем контейнер: либо сам объект, либо вложенный список
+        Object container = Dictionary.VarValues.get(varName);
+        // если нет ни одного индекса, container — это текущее значение переменной
+        // если есть индексы, то контейнер — это список, в котором мы будем менять элемент
+        for (int i = 0; i < indices.size() - 1; i++) {
+            int idx = (Integer) indices.get(i).Eval();
+            // для каждого уровня получаем следующий список
+            container = ((List<Object>) container).get(idx);
+        }
+
+        // 3) Вычисляем текущее значение и новое
+        Number currentNumber;
+        if (indices.isEmpty()) {
+            // простая переменная
+            currentNumber = (Number) container;
+        } else {
+            // берем последний индекс
+            int lastIdx = (Integer) indices.get(indices.size() - 1).Eval();
+            currentNumber = (Number) ((List<Object>) container).get(lastIdx);
+        }
+        double newValue = currentNumber.doubleValue() + ((Number) Expr.Eval()).doubleValue();
+
+        // 4) Записываем обратно
+        if (indices.isEmpty()) {
+            // простая переменная
+            Dictionary.VarValues.put(varName, newValue);
+        } else {
+            int lastIdx = (Integer) indices.get(indices.size() - 1).Eval();
+            ((List<Object>) container).set(lastIdx, newValue);
+        }
     }
+
 
     @Override
     public <T> T Visit(IVisitor<T> v){

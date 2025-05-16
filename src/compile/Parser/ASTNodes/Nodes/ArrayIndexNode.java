@@ -8,11 +8,11 @@ import compile.SemanticException;
 
 import java.util.List;
 
-public class ArrayIndexNode extends ExprNode {
-    public final IdNode arrayName;
+public class ArrayIndexNode extends ExprNode implements LValueNode{
+    public final LValueNode arrayName;
     public final ExprNode index;
 
-    public ArrayIndexNode(IdNode arrayName, ExprNode index, Position pos) {
+    public ArrayIndexNode(LValueNode arrayName, ExprNode index, Position pos) {
         this.pos = pos;
         this.arrayName = arrayName;
         this.index = index;
@@ -20,10 +20,10 @@ public class ArrayIndexNode extends ExprNode {
 
     @Override
     public Object Eval() {
-        Object array = Dictionary.VarValues.get(arrayName.Name);
+        Object container = ((ExprNode) arrayName).Eval();
 
-        if (!(array instanceof List)) {
-            throw new RuntimeException("переменная " + arrayName.Name + " не является массивом");
+        if (!(container instanceof List)) {
+            throw new RuntimeException("переменная " + arrayName.getName() + " не является массивом");
         }
 
         Object idx = index.Eval();
@@ -31,7 +31,28 @@ public class ArrayIndexNode extends ExprNode {
             throw new RuntimeException("индекс массива должен быть целым");
         }
 
-        return ((List<?>)array).get((Integer)idx);
+        return ((List<?>)container).get((Integer)idx);
+    }
+
+    @Override
+    public void setValue(Object value) {
+        Object array = Dictionary.VarValues.get(arrayName.getName());
+
+        if (!(array instanceof List)) {
+            throw new RuntimeException("переменная " + arrayName.getName() + " не является массивом");
+        }
+
+        Object idx = index.Eval();
+        if (!(idx instanceof Integer)) {
+            throw new RuntimeException("индекс массива должен быть целым");
+        }
+
+        ((List<Object>)array).set((Integer)idx, value);
+    }
+
+    @Override
+    public Position getPos() {
+        return pos;
     }
 
     @Override
@@ -42,5 +63,10 @@ public class ArrayIndexNode extends ExprNode {
     @Override
     public void VisitP(IVisitorP v) throws SemanticException {
         v.VisitArrayIndex(this);
+    }
+
+    @Override
+    public String getName() {
+        return arrayName.getName();
     }
 }
