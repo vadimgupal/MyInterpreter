@@ -54,15 +54,27 @@ public class AssignPlusNode extends StatementNode {
             int lastIdx = (Integer) indices.get(indices.size() - 1).Eval();
             currentNumber = (Number) ((List<Object>) container).get(lastIdx);
         }
-        double newValue = currentNumber.doubleValue() + ((Number) Expr.Eval()).doubleValue();
+        // 4) Считываем RHS
+        Object rhsVal = Expr.Eval();
+        if (!(rhsVal instanceof Number)) {
+            throw new RuntimeException("Операция +=: правый операнд не число");
+        }
+        Number rightNumber = (Number) rhsVal;
 
+        // 5) Вычисляем результат, сохраняя Integer, если оба были Integer
+        Number result;
+        if (currentNumber instanceof Integer && rightNumber instanceof Integer) {
+            result = currentNumber.intValue() + rightNumber.intValue();
+        } else {
+            result = currentNumber.doubleValue() + rightNumber.doubleValue();
+        }
         // 4) Записываем обратно
         if (indices.isEmpty()) {
             // простая переменная
-            Dictionary.VarValues.put(varName, newValue);
+            Dictionary.VarValues.put(varName, result);
         } else {
-            int lastIdx = (Integer) indices.get(indices.size() - 1).Eval();
-            ((List<Object>) container).set(lastIdx, newValue);
+            int lastIdx = (Integer) indices.getLast().Eval();
+            ((List<Object>) container).set(lastIdx, result);
         }
     }
 
