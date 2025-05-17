@@ -17,9 +17,21 @@ public class WhileNode extends StatementNode {
 
     @Override
     public void Execute() {
-        while ((double)Condition.Eval() > 0)
+        while (true) {
+            Object condVal = Condition.Eval();
+            if (!(condVal instanceof Boolean)) {
+                throw new RuntimeException(
+                        "Условие в while должно давать Boolean, а вернуло " +
+                                (condVal == null ? "null" : condVal.getClass().getSimpleName())
+                );
+            }
+            if (!((Boolean) condVal)) {
+                break;
+            }
             Stat.Execute();
+        }
     }
+
 
     @Override
     public <T> T Visit(IVisitor<T> v){
