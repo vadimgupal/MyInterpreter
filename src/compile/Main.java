@@ -25,17 +25,26 @@ public class Main {
     }
     public static void main(String[] args) throws LexerException {
         String s= """
-                        b=[1,2,3];
                         a=[[1,2],[3,4]];
-                        print(b[a[0][0] - 1])
+                        i=0;
+                        j=0;
+                        while (i < 2) do {
+                        j=0;
+                        while (j < 2) do {
+                        print(a[i][j]);
+                        j+=1
+                        };
+                        i+=1
+                        };
+                        b=[1,2,3,4];
+                        print(b[a[i-1][j-1]-1])
                 """;
         Lexer lex = new Lexer(s);
         try{
             Parser par = new Parser(lex);
             StatementNode progr = par.MainProgram();
-            progr.Execute();
-            System.out.println(progr);
             progr.VisitP(new SemanticCheckVisitor());
+            progr.Execute();
         } catch (LexerException e) {
             OutputError("Lexer error:", e, lex.Lines());
         } catch (SyntaxException e) {
